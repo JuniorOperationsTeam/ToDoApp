@@ -1,0 +1,28 @@
+name: Build and Publish JAR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build with Maven
+        run: mvn clean package
+      - name: Copy JAR to project root
+        run: cp target/*.jar .
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToDoApp-jar
+          path: '*.jar'
+
