@@ -84,3 +84,43 @@ The [Getting Started](https://vaadin.com/docs/latest/getting-started) guide will
 App implementation. You'll learn how to set up your development environment, understand the project 
 structure, and find resources to help you add muscles to your skeleton — transforming it into a fully-featured 
 application.
+
+## CI/CD Pipeline (GitHub Actions)
+
+This project includes a GitHub Actions workflow that automates the build and publication of the executable JAR file. On every push to the main branch, the workflow:
+
+- Sets up Java 21
+- Runs `mvn clean package` to build the project
+- Copies the generated JAR to the project root
+- Publishes the JAR as a downloadable artifact in the Actions tab
+
+**Workflow excerpt:**
+```yaml
+name: Build and Publish JAR
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Build with Maven
+        run: mvn clean package
+      - name: Copy JAR to project root
+        run: cp target/*.jar .
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToDoApp-jar
+          path: '*.jar'
+```
+
+After each push, you can download the JAR from the Actions tab or find it in the project root on GitHub.
