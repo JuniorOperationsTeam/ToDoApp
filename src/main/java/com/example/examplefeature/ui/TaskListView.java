@@ -39,7 +39,7 @@ class TaskListView extends Main {
         this.taskService = taskService;
 
         description = new TextField();
-        description.setPlaceholder("What do you wantto do?");
+        description.setPlaceholder("What do you want to do?");
         description.setAriaLabel("Task description");
         description.setMaxLength(Task.DESCRIPTION_MAX_LENGTH);
         description.setMinWidth("20em");
