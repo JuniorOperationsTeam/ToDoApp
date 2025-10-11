@@ -16,13 +16,14 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
-      - name: Build with Maven
-        run: mvn clean package
+      - name: Build with Maven (production profile)
+        run: mvn clean package -Pproduction
       - name: Copy JAR to project root
         run: cp target/*.jar .
+      - name: List JAR contents
+        run: unzip -l *.jar
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: ToDoApp-jar
           path: '*.jar'
-
