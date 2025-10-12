@@ -19,4 +19,12 @@ public class QRCodeGenerator {
         Path path = FileSystems.getDefault().getPath(filePath);
         MatrixToImageWriter.writeToPath(bitMatrix, "PNG", path);
     }
+
+    public static byte[] generateQRCodeBytes(String text) throws WriterException, IOException {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", baos);
+        return baos.toByteArray();
+    }
 }
