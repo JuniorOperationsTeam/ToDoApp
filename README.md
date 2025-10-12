@@ -2,6 +2,32 @@
 
 - [ ] TODO Replace or update this README with instructions relevant to your application
 
+## Build Pipeline with GitHub Actions
+
+This project has an automated pipeline configured with GitHub Actions that performs the following steps:
+
+1. Runs automatically whenever there is a **push** to the `main` branch.
+2. Sets up **Java 21** in the environment.
+3. Executes the command `mvn clean package` to generate the `.jar` file.
+4. Publishes the `.jar` as a workflow artifact, available for download in the **Actions** tab on GitHub.
+5. (Optional) Copies the `.jar` to the root of the repository, allowing direct access through the web interface.
+
+Snippet from the `build.yml` file:
+
+```yaml
+- name: Build with Maven
+  run: mvn clean package
+
+- name: Copy JAR to root (optional)
+  run: cp target/*.jar .
+
+- name: Upload JAR as artifact
+  uses: actions/upload-artifact@v3
+  with:
+    name: my-app-jar
+    path: '*.jar'
+```
+
 ## Project Structure
 
 The sources of your App have the following structure:
