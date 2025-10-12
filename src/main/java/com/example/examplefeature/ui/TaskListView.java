@@ -3,6 +3,7 @@ package com.example.examplefeature.ui;
 import com.example.base.ui.component.ViewToolbar;
 import com.example.examplefeature.Task;
 import com.example.examplefeature.TaskService;
+import com.example.exampleutils.QRCodeGenerator;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
@@ -61,6 +62,18 @@ class TaskListView extends Main {
         taskGrid.addColumn(task -> Optional.ofNullable(task.getDueDate()).map(dateFormatter::format).orElse("Never"))
                 .setHeader("Due Date");
         taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreationDate())).setHeader("Creation Date");
+        taskGrid.addComponentColumn(task -> {
+            Button qrButton = new Button("Generate QR Code", event -> {
+                try {
+                    String taskInfo = task.getId() + " - " + task.getDescription();
+                    QRCodeGenerator.generateQRCodeImage(taskInfo, "qrcodes/task_" + task.getId() + ".png");
+                    Notification.show("QR Code generated for: " + task.getId());
+                } catch (Exception e) {
+                    Notification.show("Error generating QR Code: " + e.getMessage());
+                }
+            });
+            return qrButton;
+        }).setHeader("QR Code");
         taskGrid.setSizeFull();
 
         setSizeFull();
@@ -79,5 +92,6 @@ class TaskListView extends Main {
         Notification.show("Task added", 3000, Notification.Position.BOTTOM_END)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
+
 
 }
