@@ -1,34 +1,66 @@
 package com.example.exampleutils;
 
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.SimpleEmail;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Service
 public class EmailService {
 
-    private final String remetente = "teu.email@gmail.com";
-    private final String password = "tua_senha_app"; // usa App Password se for Gmail
-    private final String smtpHost = "smtp.gmail.com";
-    private final int smtpPort = 587;
+    @Value("${mailgun.api.key}")
+    private String apiKey;
 
-    public void enviarEmailConfirmacao(String destinatario, String descricaoTask) {
-        try {
-            SimpleEmail email = new SimpleEmail();
-            email.setHostName(smtpHost);
-            email.setSmtpPort(smtpPort);
-            email.setAuthentication(remetente, password);
-            email.setStartTLSEnabled(true);
+    @Value("${mailgun.domain}")
+    private String domain;
 
-            email.setFrom(remetente);
-            email.setSubject("Confirmação de criação de Task");
-            email.setMsg("Olá,\n\nA tua task \"" + descricaoTask + "\" foi criada com sucesso.\n\nCumprimentos,\nEquipa");
-            email.addTo(destinatario);
+    @Value("${mailgun.from.email}")
+    private String fromEmail;
 
-            email.send();
-            System.out.println("✅ Email enviado para " + destinatario);
-        } catch (EmailException e) {
-            System.err.println("❌ Erro ao enviar email: " + e.getMessage());
+    @Value("${mailgun.base-url:https://api.mailgun.net}")
+    private String baseUrl;
+
+    private final HttpClient http = HttpClient.newHttpClient();
+
+    /**
+     * Envia email (aceita texto e/ou html). Retorna true se Mailgun aceitou a mensagem.
+     */
+    public boolean sendEmail(String destinatario, String subject, String textBody, String htmlBody) throws IOException, InterruptedException {
+        String url = baseUrl + "/v3/" + domain + "/messages";
+
+        var sb = new StringBuilder();
+        sb.append("from=").append(URLEncoder.encode(fromEmail, StandardCharsets.UTF_8));
+        sb.append("&to=").append(URLEncoder.encode(destinatario, StandardCharsets.UTF_8));
+        sb.append("&subject=").append(URLEncoder.encode(subject, StandardCharsets.UTF_8));
+        if (textBody != null) {
+            sb.append("&text=").append(URLEncoder.encode(textBody, StandardCharsets.UTF_8));
         }
+        if (htmlBody != null) {
+            sb.append("&html=").append(URLEncoder.encode(htmlBody, StandardCharsets.UTF_8));
+        }
+
+        String auth = "api:" + apiKey;
+        String basic = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Authorization", "Basic " + basic)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(sb.toString()))
+                .build();
+
+        HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("[Mailgun] status=" + response.statusCode() + " body=" + response.body());
+
+        // 200 => Mailgun queued it
+        return response.statusCode() == 200;
     }
 }
