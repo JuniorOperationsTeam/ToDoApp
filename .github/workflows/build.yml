@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main  # ou o nome da branch de destino dos PRs
 
 jobs:
   build:
@@ -11,17 +14,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
+
       - name: Build with Maven (production profile)
         run: mvn clean package -Pproduction
+
       - name: Copy JAR to project root
         run: cp target/*.jar .
+
       - name: List JAR contents
         run: unzip -l *.jar
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
