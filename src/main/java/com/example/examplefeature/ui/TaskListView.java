@@ -10,6 +10,7 @@ import com.vaadin.flow.component.datepicker.DatePicker;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -125,6 +126,12 @@ class TaskListView extends Main {
             }
         });
         generateAllBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        // Botão para download de todas as tasks em PDF
+        var downloadAllTasksLink = new Anchor("/api/pdf/tasks", "Download PDF de todas as tasks");
+        downloadAllTasksLink.getElement().setAttribute("download", true);
+        var downloadAllTasksBtn = new Button("Imprimir todas as tasks", event -> downloadAllTasksLink.getElement().callJsFunction("click"));
+        downloadAllTasksBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        add(downloadAllTasksBtn, downloadAllTasksLink);
 
         setSizeFull();
         addClassNames(LumoUtility.BoxSizing.BORDER, LumoUtility.Display.FLEX, LumoUtility.FlexDirection.COLUMN,
