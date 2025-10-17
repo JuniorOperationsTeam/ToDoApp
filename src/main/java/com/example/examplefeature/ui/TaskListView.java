@@ -7,21 +7,21 @@ import com.example.exampleutils.QRCodeGenerator;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.datepicker.DatePicker;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Menu;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.Image;
 import org.springframework.data.domain.Pageable;
 
-import java.io.ByteArrayInputStream;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -68,6 +68,15 @@ class TaskListView extends Main {
         taskGrid.addColumn(task -> Optional.ofNullable(task.getDueDate()).map(dateFormatter::format).orElse("Never"))
                 .setHeader("Due Date");
         taskGrid.addColumn(task -> dateTimeFormatter.format(task.getCreationDate())).setHeader("Creation Date");
+
+        // ✅ Coluna com botão "Send Email"
+        taskGrid.addComponentColumn(task -> {
+            Button sendEmailBtn = new Button("Send Email", click -> openEmailDialog(task));
+            sendEmailBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            return sendEmailBtn;
+        }).setHeader("Email");
+
+        // Coluna já existente: gerar QR Code
         taskGrid.addComponentColumn(task -> {
             Button qrButton = new Button("Generate QR Code", event -> {
                 try {
@@ -91,6 +100,7 @@ class TaskListView extends Main {
             qrButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
             return qrButton;
         }).setHeader("QR Code");
+
         taskGrid.setSizeFull();
 
         Button generateAllBtn = new Button("Generate All QR Codes", event -> {
@@ -147,5 +157,42 @@ class TaskListView extends Main {
                 "\nDue Date: " + (task.getDueDate() != null ? task.getDueDate().toString() : "-");
     }
 
+    // 📨 Abre um dialog para inserir email e enviar notificação
+    private void openEmailDialog(Task task) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Send Task Info by Email");
+
+        EmailField emailField = new EmailField("Recipient Email");
+        emailField.setPlaceholder("example@domain.com");
+        emailField.setWidthFull();
+
+        Button sendBtn = new Button("Send", e -> {
+            if (emailField.getValue() == null || emailField.getValue().isBlank()) {
+                Notification.show("Please enter a valid email", 3000, Notification.Position.BOTTOM_END)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
+            try {
+                String taskInfo = formatTaskInfo(task);
+                // ⚡ Aqui chamamos o service que envia o email
+                taskService.sendTaskByEmail(task, emailField.getValue());
+
+                Notification.show("Email sent to " + emailField.getValue(), 3000, Notification.Position.BOTTOM_END)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                dialog.close();
+            } catch (Exception ex) {
+                Notification.show("Failed to send email: " + ex.getMessage(), 4000, Notification.Position.BOTTOM_END)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+        sendBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
+        Button cancelBtn = new Button("Cancel", e -> dialog.close());
+
+        dialog.getFooter().add(cancelBtn, sendBtn);
+        dialog.add(emailField);
+        dialog.open();
+    }
 
 }
