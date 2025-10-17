@@ -12,6 +12,3 @@
 node_modules/
 src/main/frontend/generated/
 vite.generated.ts
-
-# Ignore local config files with secrets
-application-local.properties

@@ -74,16 +74,6 @@
             <artifactId>javase</artifactId>
             <version>3.5.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-email -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-email</artifactId>
-            <version>1.6.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sendgrid</groupId>
-            <artifactId>sendgrid-java</artifactId>
-            <version>4.9.3</version>
         <dependency>
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
