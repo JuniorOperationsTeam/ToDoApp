@@ -3,46 +3,25 @@ name: Build, Publish JAR and SonarCloud Scan
 on:
   push:
     branches:
-      - '**'   # dispara em qualquer branch
+      - '**'   # qualquer push
   pull_request:
     branches:
-      - '**'   # dispara em qualquer PR
+      - '**'   # qualquer PR
 
 jobs:
-  build:
+  sonarcloud:
     runs-on: ubuntu-latest
+    name: SonarCloud Analysis
     steps:
-      # 1️⃣ Checkout do repositório
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Configurar Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      # 3️⃣ Build do projeto com Maven
-      - name: Build with Maven (production profile)
-        run: mvn clean package -Pproduction
-
-      # 4️⃣ Copiar JAR para a raiz do projeto
-      - name: Copy JAR to project root
-        run: cp target/*.jar .
-
-      # 5️⃣ Listar conteúdo do JAR
-      - name: List JAR contents
-        run: unzip -l *.jar
-
-      # 6️⃣ Fazer upload do JAR como artefato
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ToDoApp-jar
-          path: '*.jar'
-          
-      # 7️⃣ Análise com SonarCloud
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
@@ -51,4 +30,34 @@ jobs:
             -Dsonar.organization=junioroperationsteam
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-            -Dsonar.branch.name=${{ github.ref_name }}
+            -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
+
+  build-and-publish:
+    runs-on: ubuntu-latest
+    name: Build and Publish JAR
+    if: github.ref == 'refs/heads/main'   # só corre no main
+    needs: sonarcloud
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build with Maven (production profile)
+        run: mvn clean package -Pproduction
+
+      - name: Copy JAR to project root
+        run: cp target/*.jar .
+
+      - name: List JAR contents
+        run: unzip -l *.jar
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToDoApp-jar
+          path: '*.jar'
