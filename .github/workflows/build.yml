@@ -1,37 +1,54 @@
-name: Build and Publish JAR
+name: Build, Publish JAR and SonarCloud Scan
 
 on:
   push:
     branches:
-      - main
+      - '**'   # dispara em qualquer branch
   pull_request:
     branches:
-      - main  # ou o nome da branch de destino dos PRs
+      - '**'   # dispara em qualquer PR
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1️⃣ Checkout do repositório
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
+      # 3️⃣ Build do projeto com Maven
       - name: Build with Maven (production profile)
         run: mvn clean package -Pproduction
 
+      # 4️⃣ Copiar JAR para a raiz do projeto
       - name: Copy JAR to project root
         run: cp target/*.jar .
 
+      # 5️⃣ Listar conteúdo do JAR
       - name: List JAR contents
         run: unzip -l *.jar
 
+      # 6️⃣ Fazer upload do JAR como artefato
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
           name: ToDoApp-jar
           path: '*.jar'
+          
+      # 7️⃣ Análise com SonarCloud
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=JuniorOperationsTeam_ToDoApp
+            -Dsonar.organization=junioroperationsteam
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=${{ secrets.3c8d0ec83feee7cd1fd8d0cc43042e48e3c70644 }}
+            -Dsonar.branch.name=main
