@@ -50,5 +50,5 @@ jobs:
             -Dsonar.projectKey=JuniorOperationsTeam_ToDoApp
             -Dsonar.organization=junioroperationsteam
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.login=${{ secrets.3c8d0ec83feee7cd1fd8d0cc43042e48e3c70644 }}
-            -Dsonar.branch.name=main
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.branch.name=${{ github.ref_name }}
