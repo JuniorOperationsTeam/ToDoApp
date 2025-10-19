@@ -1,4 +1,4 @@
-name: Build, Publish JAR and SonarCloud Scan
+name: CI - SonarCloud + Build/Publish
 
 on:
   push:
@@ -11,9 +11,8 @@ on:
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
-    name: SonarCloud Analysis
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -21,6 +20,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '21'
+
+      - name: Build classes if main
+        if: github.ref == 'refs/heads/main'
+        run: mvn clean compile -Pproduction
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
@@ -33,13 +36,12 @@ jobs:
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
             ${{ github.ref == 'refs/heads/main' && '-Dsonar.java.binaries=target/classes' || '' }}
 
-  build-and-publish:
+  build-and-upload:
     runs-on: ubuntu-latest
-    name: Build and Publish JAR
     needs: sonarcloud
     if: github.ref == 'refs/heads/main'   # só corre no main
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -48,14 +50,11 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build with Maven (production profile)
+      - name: Build JAR
         run: mvn clean package -Pproduction
 
       - name: Copy JAR to project root
         run: cp target/*.jar .
-
-      - name: List JAR contents
-        run: unzip -l *.jar
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
