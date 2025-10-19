@@ -1,30 +1,30 @@
-name: CI - SonarCloud + Build/Publish
+name: Build, Publish JAR and SonarCloud Scan
 
 on:
   push:
     branches:
-      - '**'   # qualquer push
+      - '**'
   pull_request:
     branches:
-      - '**'   # qualquer PR
+      - '**'
 
 jobs:
   sonarcloud:
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      # 1️⃣ Checkout do repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build classes if main
-        if: github.ref == 'refs/heads/main'
-        run: mvn clean compile -Pproduction
-
+      # 3️⃣ SonarCloud Scan (apenas código-fonte)
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
@@ -34,28 +34,39 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
             -Dsonar.branch.name=${{ github.head_ref || github.ref_name }}
-            ${{ github.ref == 'refs/heads/main' && '-Dsonar.java.binaries=target/classes' || '' }}
+            -Dsonar.java.binaries=
+            -Dsonar.exclusions=**/*.class,**/target/**
 
-  build-and-upload:
+  build-and-publish:
+    name: Build and Publish JAR
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     needs: sonarcloud
-    if: github.ref == 'refs/heads/main'   # só corre no main
     steps:
-      - name: Checkout
+      # 1️⃣ Checkout do repositório
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build JAR
+      # 3️⃣ Build do projeto com Maven
+      - name: Build with Maven (production profile)
         run: mvn clean package -Pproduction
 
+      # 4️⃣ Copiar JAR para a raiz do projeto
       - name: Copy JAR to project root
         run: cp target/*.jar .
 
+      # 5️⃣ Listar conteúdo do JAR
+      - name: List JAR contents
+        run: unzip -l *.jar
+
+      # 6️⃣ Fazer upload do JAR como artefato
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
         with:
